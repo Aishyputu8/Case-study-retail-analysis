@@ -204,3 +204,47 @@ which will help understand the growth trend of the company.** */
 	  having freq >10  and totalsales > 1000
          order by freq desc;
 
+/* 13. **Occasional Customers - Low Purchase Frequency***/
+				select CustomerID, count(*) as freq,
+        round(sum(QuantityPurchased*Price),2) as sales
+         from psl
+         group by CustomerID 
+         having freq <= 2
+         order by freq desc;
+
+/* 14: **Repeat Purchase Patterns***/
+		select CustomerID,ProductID,  count(*) as freq
+         from psl
+         group by CustomerID , ProductID
+         having freq >1
+         order by CustomerID ;
+
+/* 15 : **Loyalty Indicators** */ 
+		with ab as( select
+        CustomerID, TransactionID,
+        str_to_date(TransactionDate, '%Y-%m-%d') as dates from psl)
+			select 
+            CustomerID, count(TransactionID),
+            max(dates) as last, 
+            min(dates) as first,
+            (max(dates) - min(dates)) as betweendate
+            from ab 
+            group by customerid
+            having betweendate <360 and count(TransactionID) >2 ;
+
+/***Customer Segmentation based on quantity purchased***/
+      			create table new1 as 
+                    select CustomerID, 
+                    case when totalqntity >30 then 'high'
+                    when totalqntity between 10 and 30 then 'med'
+                    when totalqntity between 1 and 10 then 'low' 
+                    else 'none' end as custsegment
+                from 
+                    (
+                    select CustomerID,
+                    sum(QuantityPurchased)  as totalqntity
+                    from psl
+                    group by CustomerID ) as ab;              
+                    
+select count(*) , custsegment from new1
+ group by custsegment;           
